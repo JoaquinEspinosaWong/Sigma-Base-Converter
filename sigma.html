@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma Base Converter - Joaquin Espinosa</title>
+    <style>
+        .grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 20px; /* Space between each box */
+            margin-top: 20px;
+            justify-content: start;
+        }
+        .box {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers content horizontally */
+            justify-content: center; /* Centers content vertically */
+            text-align: center; /* Centers text */
+            min-width: 60px;
+        }
+        .input-box {
+            width: 30px;
+            text-align: center;
+        }
+        .group {
+            display: flex;
+            gap: 10px;
+        }
+        .group-gap {
+            width: 20px; /* Space between groups */
+        }
+        .set-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #000;
+            background-color: #f1f1f1;
+        }
+        .button-container {
+            margin: 10px 0;
+        }
+        .set-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .dynamic-controls {
+            margin-top: 10px;
+        }
+        .control-button {
+            margin-right: 5px;
+        }
+        .delete-button {
+            margin-left: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sigma Base Converter - Joaquin Espinosa</h1>
+    <button onclick="clearScreen()">Clear Screen</button>
+    <button onclick="generateBoxes('binary')">Generate Binary Table</button>
+    <button onclick="generateBoxes('octal')">Generate Octal Table</button>
+    <button onclick="generateBoxes('hexadecimal')">Generate Hexadecimal Table</button>
+
+    <div id="mainContainer"></div>
+
+    <script>
+        function generateBoxes(base) {
+            const mainContainer = document.getElementById("mainContainer");
+
+            // Create a container for this table
+            const setContainer = document.createElement("div");
+            setContainer.className = "set-container";
+
+            // Add a title to the table
+            const setTitle = document.createElement("div");
+            setTitle.className = "set-title";
+            setTitle.textContent = `${base.charAt(0).toUpperCase() + base.slice(1)} Table`;
+            setContainer.appendChild(setTitle);
+
+            const grid = document.createElement("div");
+            grid.className = "grid";
+
+            let groupSize, totalBits, startExponent;
+
+            if (base === 'binary') {
+                totalBits = 8;
+                createBinaryBoxes(grid, totalBits);
+
+                // Add dynamic controls for Binary
+                const controls = document.createElement("div");
+                controls.className = "dynamic-controls";
+
+                const addButton = document.createElement("button");
+                addButton.textContent = "+ Add 2^";
+                addButton.className = "control-button";
+                addButton.onclick = () => {
+                    const currentMaxExponent = parseInt(grid.firstChild.dataset.exponent, 10);
+                    createBinaryBox(grid, currentMaxExponent + 1);  // Add only one box with the next power of 2
+                };
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "- Remove 2^";
+                removeButton.className = "control-button";
+                removeButton.onclick = () => {
+                    const firstBox = grid.firstChild;
+                    if (firstBox) {
+                        grid.removeChild(firstBox); // Remove the leftmost box (highest exponent)
+                    }
+                };
+
+                controls.appendChild(addButton);
+                controls.appendChild(removeButton);
+                setContainer.appendChild(controls);
+            } else if (base === 'octal') {
+                groupSize = 3;
+                startExponent = 2;
+
+                // Pre-create 3 groups
+                for (let i = 0; i < 3; i++) {
+                    createGroupedBoxes(grid, groupSize, startExponent);
+                }
+
+                // Add dynamic controls for Octal
+                const controls = document.createElement("div");
+                controls.className = "dynamic-controls";
+
+                const addButton = document.createElement("button");
+                addButton.textContent = "+ Add Group";
+                addButton.className = "control-button";
+                addButton.onclick = () => {
+                    createGroupedBoxes(grid, groupSize, startExponent, true);
+                };
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "- Remove Group";
+                removeButton.className = "control-button";
+                removeButton.onclick = () => {
+                    const lastGroup = grid.querySelector(".group");
+                    if (lastGroup) {
+                        grid.removeChild(lastGroup);
+                    }
+                };
+
+                controls.appendChild(addButton);
+                controls.appendChild(removeButton);
+                setContainer.appendChild(controls);
+            } else if (base === 'hexadecimal') {
+                groupSize = 4;
+                startExponent = 3;
+
+                // Pre-create 3 groups
+                for (let i = 0; i < 3; i++) {
+                    createGroupedBoxes(grid, groupSize, startExponent);
+                }
+
+                // Add dynamic controls for Hexadecimal
+                const controls = document.createElement("div");
+                controls.className = "dynamic-controls";
+
+                const addButton = document.createElement("button");
+                addButton.textContent = "+ Add Group";
+                addButton.className = "control-button";
+                addButton.onclick = () => {
+                    createGroupedBoxes(grid, groupSize, startExponent, true);
+                };
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "- Remove Group";
+                removeButton.className = "control-button";
+                removeButton.onclick = () => {
+                    const lastGroup = grid.querySelector(".group");
+                    if (lastGroup) {
+                        grid.removeChild(lastGroup);
+                    }
+                };
+
+                controls.appendChild(addButton);
+                controls.appendChild(removeButton);
+                setContainer.appendChild(controls);
+            }
+
+            // Add "Reset" button for this table
+            const buttonContainer = document.createElement("div");
+            buttonContainer.className = "button-container";
+
+            const resetButton = document.createElement("button");
+            resetButton.textContent = "Reset";
+            resetButton.onclick = function () {
+                const inputs = setContainer.querySelectorAll("input");
+                inputs.forEach(input => input.value = "");
+            };
+
+            buttonContainer.appendChild(resetButton);
+
+            // Add "Delete Table" button
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete Table";
+            deleteButton.className = "delete-button";
+            deleteButton.onclick = () => {
+                mainContainer.removeChild(setContainer); // Delete the table when clicked
+            };
+
+            buttonContainer.appendChild(deleteButton);
+            setContainer.appendChild(buttonContainer);
+
+            // Append the set container to the main container
+            setContainer.appendChild(grid);
+            mainContainer.appendChild(setContainer);
+        }
+
+        function createBinaryBoxes(grid, totalBits) {
+            const fragment = document.createDocumentFragment();
+
+            // Loop through the total bits and create boxes with descending exponents
+            for (let i = totalBits - 1; i >= 0; i--) {
+                const box = document.createElement("div");
+                box.className = "box";
+                const exponent = i; // The exponent for the current box
+
+                box.dataset.exponent = exponent;
+                const value = Math.pow(2, exponent);
+
+                const label = document.createElement("div");
+                label.textContent = `2^${exponent}`;
+                label.style.color = "blue";
+
+                const valueLabel = document.createElement("div");
+                valueLabel.textContent = value;
+                valueLabel.style.color = "green";
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.maxLength = 1;
+                input.className = "input-box";
+
+                box.appendChild(label);
+                box.appendChild(valueLabel);
+                box.appendChild(input);
+
+                fragment.appendChild(box);
+            }
+
+            grid.appendChild(fragment);
+        }
+
+        function createBinaryBox(grid, exponent) {
+            const box = document.createElement("div");
+            box.className = "box";
+            box.dataset.exponent = exponent;
+            const value = Math.pow(2, exponent);
+
+            const label = document.createElement("div");
+            label.textContent = `2^${exponent}`;
+            label.style.color = "blue";
+
+            const valueLabel = document.createElement("div");
+            valueLabel.textContent = value;
+            valueLabel.style.color = "green";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.maxLength = 1;
+            input.className = "input-box";
+
+            box.appendChild(label);
+            box.appendChild(valueLabel);
+            box.appendChild(input);
+
+            grid.insertBefore(box, grid.firstChild); // Add to the left
+        }
+
+        function createGroupedBoxes(grid, groupSize, startExponent, addToLeft = false) {
+            const fragment = document.createDocumentFragment();
+            const group = document.createElement("div");
+            group.className = "group"; // group div to handle each set of bits
+
+            for (let i = 0; i < groupSize; i++) {
+                const box = document.createElement("div");
+                box.className = "box";
+
+                const exponent = startExponent - i;
+                const value = Math.pow(2, exponent);
+
+                const label = document.createElement("div");
+                label.textContent = `2^${exponent}`;
+                label.style.color = "blue";
+
+                const valueLabel = document.createElement("div");
+                valueLabel.textContent = value;
+                valueLabel.style.color = "green";
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.maxLength = 1;
+                input.className = "input-box";
+
+                box.appendChild(label);
+                box.appendChild(valueLabel);
+                box.appendChild(input);
+                group.appendChild(box);
+            }
+
+            fragment.appendChild(group);
+
+            // Insert new group at the start (left) of the grid if addToLeft is true
+            if (addToLeft) {
+                grid.insertBefore(fragment, grid.firstChild);
+            } else {
+                grid.appendChild(fragment);
+            }
+        }
+
+        function clearScreen() {
+            const mainContainer = document.getElementById("mainContainer");
+            mainContainer.innerHTML = "";
+        }
+    </script>
+</body>
+</html>
